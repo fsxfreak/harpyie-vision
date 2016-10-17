@@ -3,13 +3,13 @@
 
 // Base layers
 //  .. OpenStreetMap
-var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', minZoom: 18, maxZoom: 24});
+var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', minZoom: 18, maxZoom: 24, maxNativeZoom: 19});
 //  .. White background
 var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: 18, maxZoom: 24});
 
 // Overlay layers (TMS)
-var lyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: "", minZoom: 18, maxZoom: 24});
-var mlyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: "", minZoom: 18, maxNativeZoom: 24, maxZoom: 30});
+var lyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 0.9, attribution: "", minZoom: 18, maxZoom: 24});
+var mlyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 1, attribution: "", minZoom: 18, maxNativeZoom: 24, maxZoom: 30});
 // Map
 var map = L.map('map', {
 	center: [32.88398788, -117.234798816],
