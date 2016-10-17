@@ -9,7 +9,7 @@ var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAA
 
 // Overlay layers (TMS)
 var lyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: "", minZoom: 18, maxZoom: 24});
-var mlyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: "", minZoom: 18, maxZoom: 24});
+var mlyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 0.7, attribution: "", minZoom: 18, maxNativeZoom: 24, maxZoom: 30});
 // Map
 var map = L.map('map', {
 	center: [32.88398788, -117.234798816],
@@ -24,9 +24,16 @@ var miniMap = L.map('minimap', {
 	center: [32.88398788, -117.234798816],
 	zoom: 18,
 	minZoom: 18,
-	maxZoom: 24,
+	maxZoom: 30,
+	maxNativeZoom: 24,
+	touchZoom: false,
+	doubleClickZoom: false,
+	scrollWheelZoom: false,
+	zoomControl: false,
+	boxZoom: false,
+	keyboard: false,
+	zoomAnimation: false,
 	layers: [mlyr],
-	dragging: false,
 });
 
 
@@ -66,6 +73,7 @@ L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 map.fitBounds([[32.8835050061, -117.234528946], [32.884470754, -117.235068686]]);
 
 var clickStart;
+var miniStart;
 var box;
 var miniBox = L.rectangle([[0,0],[0,0]], {fill: false, color: '#3388ff'}).addTo(miniMap);
 var boxes = [];
@@ -75,9 +83,36 @@ function onMouseDown(e) {
 }
 map.on('mousedown', onMouseDown);
 
-function onBoxClick(e) {
-	console.log("AFWEF");
+function onMiniDown(e) {
+	miniStart = miniMap.getBounds()._southWest;
 }
+miniMap.on('dragstart', onMiniDown);
+
+function onMiniMove(e) {
+	if (miniStart != null) {
+		var offLat = miniMap.getBounds()._southWest.lat - miniStart.lat;
+		var offLng = miniMap.getBounds()._southWest.lng - miniStart.lng;
+		miniBox.setBounds([[miniBox._bounds._southWest.lat + offLat, miniBox._bounds._southWest.lng + offLng],[miniBox._bounds._northEast.lat + offLat, miniBox._bounds._northEast.lng + offLng]]);
+		if (boxes.length > 0) {
+			boxes[boxes.length - 1].setBounds(miniBox._bounds);
+		}
+		miniStart = miniMap.getBounds()._southWest;
+	}
+}
+miniMap.on('drag', onMiniMove);
+function onMiniUp(e) {
+	if (miniStart != null) {
+		miniStart = null;
+		if (boxes.length > 0) {
+			boxes[boxes.length - 1].setBounds(miniBox._bounds);
+		}
+	}
+}
+miniMap.on('dragend', onMiniUp);
+
+miniMap.on('contextmenu', function(e) {});
+map.on('contextmenu', function(e) {});
+
 function onMouseUp(e) {
 	if (box != null) {
 		console.log(clickStart.toString()+" -> "+e.latlng.toString());
@@ -86,7 +121,6 @@ function onMouseUp(e) {
 		var area = (box._bounds._northEast.lat-box._bounds._southWest.lat) * (box._bounds._northEast.lng-box._bounds._southWest.lng);
 		console.log(Math.abs(area));
 		boxes.push(box)
-		box.on('mousedown', onBoxClick);
 		box = null;
 	}
 }
@@ -95,9 +129,9 @@ map.on('mouseup', onMouseUp);
 function onMouseMove(e) {
 	if (box != null) {
 		box.setBounds(L.latLngBounds(e.latlng, clickStart));
-		miniBox.setBounds(L.latLngBounds(e.latlng, clickStart));
+		miniBox.setBounds(box._bounds);
 		// console.log(clickStart.toString()+" -> "+e.latlng.toString());
-		miniMap.fitBounds(L.latLngBounds(e.latlng, clickStart));
+		miniMap.fitBounds(box._bounds);
 	}
 }
 map.on('mousemove', onMouseMove);
@@ -108,6 +142,12 @@ function onMouseOut(e) {
 		box.removeFrom(map);
 		clickStart = null;
 		box = null;
+		if (boxes.length > 0) {
+			miniBox.setBounds(boxes[boxes.length - 1]._bounds);
+			miniMap.fitBounds(miniBox._bounds);
+		} else {
+			miniBox.setBounds([[0,0],[0,0]]);
+		}
 	}
 }
 map.on('mouseout', onMouseOut);
@@ -116,11 +156,18 @@ function undoBox() {
 	if (boxes.length > 0) {
 		boxes[boxes.length - 1].removeFrom(map);
 		boxes.pop();
+		if (boxes.length > 0) {
+			miniBox.setBounds(boxes[boxes.length - 1]._bounds);
+			miniMap.fitBounds(miniBox._bounds);
+		} else {
+			miniBox.setBounds([[0,0],[0,0]]);
+		}
 	}
 }
 function clearBoxes() {
 	for (i = boxes.length - 1; i >= 0; i--) {
 		boxes[i].removeFrom(map);
 		boxes.pop();
+		miniBox.setBounds([[0,0],[0,0]]);
 	}
 }

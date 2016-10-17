@@ -4,8 +4,8 @@ html, body {
 body {
 	margin:0;
 	padding:0;
-kit-user-select: none;
-moz-user-select: -moz-none;
+-webkit-user-select: none;
+-moz-user-select: -moz-none;
 -ms-user-select: none;
 	user-select: none;}
 body, table, tr, td, th, div, h1, h2, input, button {
