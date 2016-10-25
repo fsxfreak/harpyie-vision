@@ -89,3 +89,5 @@ ENV/
 .ropeproject
 
 img/
+*.sqlite3
+settings_secret.py
