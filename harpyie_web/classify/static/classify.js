@@ -9,7 +9,7 @@ var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '
 var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: 13, maxZoom: 21});
 
 // Overlay layers (TMS)
-var lyr = L.tileLayer('/static/imgs/{z}/{x}/{y}.png', {tms: true, opacity: 0.9, attribution: "", minZoom: 13, maxZoom: 21});
+var lyr = L.tileLayer('/static/imgs/{z}/{x}/{y}.png', {tms: true, opacity: 1, attribution: "", minZoom: 13, maxZoom: 21});
 var mlyr = L.tileLayer('/static/imgs/{z}/{x}/{y}.png', {tms: true, opacity: 1, attribution: "", minZoom: 13, maxNativeZoom: 21, maxZoom: 25});
 // Map config
 var map = L.map('map', {
@@ -335,6 +335,7 @@ function undoBox() {
 			minibox.setBounds(boxes[boxes.length - 1].getBounds());
 			minimap.fitBounds(minibox.getBounds());
 			boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
+			updateHandles();
 		} else {
 			removeMiniBox();
 		}
