@@ -103,6 +103,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # allow extension of django.contrib.auth.models.User
 AUTH_PROFILE_MODULE = 'classify.UserData'
 
+LOGIN_URL = '/accounts/login/'
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 

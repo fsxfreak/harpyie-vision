@@ -11,6 +11,12 @@ from uuid import UUID
 
 class Tile(models.Model):
   # Tile.tag_set.all() is all the tags referencing this Tile
+  lat1 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
+  lon1 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
+  lat2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
+  lon2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
+
+  image_config = models.ForeignKey(ImageConfig, on_delete=models.SET_NULL)
 
   def __unicode__(self):
     return 'TODO UNICODE TILE'
@@ -34,10 +40,10 @@ post_save.connect(create_user_profile, sender=User)
 class Tag(models.Model):
   id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-  lat1 = models.DecimalField(blank=False, editable=False, decimal_places=6, max_digits=10)
-  lon1 = models.DecimalField(blank=False, editable=False, decimal_places=6, max_digits=10)
-  lat2 = models.DecimalField(blank=False, editable=False, decimal_places=6, max_digits=10)
-  lon2 = models.DecimalField(blank=False, editable=False, decimal_places=6, max_digits=10)
+  lat1 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
+  lon1 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
+  lat2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
+  lon2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
 
   tile = models.ForeignKey(Tile, on_delete=models.PROTECT)
 
@@ -55,7 +61,9 @@ class Tag(models.Model):
 
 class ImageConfig(models.Model):
   # If an image is local, top level of url should be from 'static/'
-  url = models.CharField(blank=False, max_length=255)
+  url = models.CharField(blank=False, max_length=255, unique=True)
+
+  # ImageConfig.tile_set.all() is all the tiles referencing this image
 
   def __unicode__(self):
     return 'TODO UNICODE IMAGECONFIG'
