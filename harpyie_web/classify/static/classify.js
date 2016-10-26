@@ -355,53 +355,13 @@ function clearBoxes() {
 function sendBoxes() {
 	for (var i = 0; i < boxes.length; i++) {
 		var select = boxes[i]
-		sendBox("/create_tag", {
-			lat1: select.getBounds().getNorth(),
-			lon1: select.getBounds().getEast(),
-			lat2: select.getBounds().getSouth(),
-			lon2: select.getBounds().getWest()});
+		var data = $('#selection-form').serializeArray()
+		data.push({name:"lat1", value:select.getBounds().getNorth()});
+		data.push({name:"lng1", value:select.getBounds().getEast()});
+		data.push({name:"lat2", value:select.getBounds().getSouth()});
+		data.push({name:"lng2", value:select.getBounds().getWest()});
+		$.post("/create_tag", data);
 	}
 	return true;
 
-}
-
-// Send box info in invisible iframe so that window doesn't refresh
-function sendBox( url, params ){
-
-    params = params || {};
-
-    // function to remove the iframe
-    var removeIframe = function( iframe ){
-        iframe.parentElement.removeChild(iframe);
-    };
-
-    var iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-
-    iframe.onload = function(){
-        var iframeDoc = this.contentWindow.document;
-
-        var form = iframeDoc.createElement('form');
-        form.method = "post";
-        form.action = url;
-        iframeDoc.body.appendChild(form);
-		form.appendChild(document.getElementsByName("csrfmiddlewaretoken")[0].cloneNode(true));
-        // pass the parameters
-        for( var name in params ){
-            var input = iframeDoc.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = params[name];
-            form.appendChild(input);
-        }
-		form.appendChild(document.getElementsByName("id")[0].cloneNode(true));
-
-        form.submit();
-        // remove the iframe
-        setTimeout( function(){ 
-            removeIframe(iframe);
-        }, 500);
-    };
-
-    document.body.appendChild(iframe);
 }

@@ -6,7 +6,6 @@
 		<div id="minimap"></div>
 		<form id="selection-form" onsubmit="sendBoxes()" method="post">
 			{% csrf_token %}
-			User ID:<br><input type="number" name="id"><br>
 			<input type="submit" value="Submit">
 		</form>
 		<button onclick="undoBox()">Delete Selected Box</button>
