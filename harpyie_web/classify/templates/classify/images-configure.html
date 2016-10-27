@@ -1,0 +1,32 @@
+{% extends "classify/base.html" %}
+{% load staticfiles %}
+{% block body_block %}
+<div class="container">
+  <form action="/images/spawn/" method="post">
+    {% csrf_token %}
+    <label class="label">map image name</label>
+    <p class="control">
+      <input name="img_name" class="input" type="text" placeholder="map image name">
+    </p>
+    <label class="label">upper left lat</label>
+    <p class="control">
+      <input name="lat1" class="input" type="text" placeholder="upper left lat">
+    </p>
+    <label class="label">upper left lon</label>
+    <p class="control">
+      <input name="lon1" class="input" type="text" placeholder="upper left lon">
+    </p>
+    <label class="label">bottom right lat</label>
+    <p class="control">
+      <input name="lat2" class="input" type="text" placeholder="bottom right lat">
+    </p>
+    <label class="label">bottom right lon</label>
+    <p class="control">
+      <input name="lon2" class="input" type="text" placeholder="bottom right lon">
+    </p>
+    <p class="control">
+      <button class="button">Submit</button>
+    </p>
+  </form>
+</div>
+{% endblock %}

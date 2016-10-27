@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
+from settings_secret import *
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -19,8 +20,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'w0gtkjy_^1v=$bihmvvq2f-oo@gy*c9@11i*$p9-*xur$kie$@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -101,6 +100,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# allow extension of django.contrib.auth.models.User
+AUTH_PROFILE_MODULE = 'classify.UserData'
+
+LOGIN_URL = '/accounts/login/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
