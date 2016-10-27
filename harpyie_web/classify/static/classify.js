@@ -366,7 +366,7 @@ function sendBoxes() {
 				{name:"lng2", value:select.getBounds().getWest()}
 			];
 			data = data.concat($('#selection-form').serializeArray());
-			$.post("/tag/spawn", data, function() {
+			$.post("/tag/spawn/", data, function() {
 				var index = boxes.indexOf(select);
 				if (index > -1) {
 					boxes.splice(index, 1);
@@ -388,7 +388,7 @@ function updateMap() {
 	if (pending == 0) {
 		$("#sending").hide();
 		if (!failed) {
-			$.getJSON("tiles/retrieve", function(response) {
+			$.getJSON("tiles/retrieve/", function(response) {
 				map.fitBounds([[response.lat1, response.lat1], [response.lat1, response.lat1]])});
 		}
 	}

@@ -28,7 +28,7 @@ def tiles_retrieve(request):
 @login_required
 def tag_spawn(request):
   if request.method == 'POST':
-    success, lat1, lon1, lat2, lon2 = get_extents(request)
+    success, lat1, lon1, lat2, lon2 = get_extents(request.GET.get("lat1"), request.GET.get("lon1"), request.GET.get("lat2"), request.GET.get("lon2"))
     if not success:
       return JsonResponse({ 'message' : 'failure' })
 
