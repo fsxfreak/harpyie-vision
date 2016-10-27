@@ -6,10 +6,13 @@
 		<div id="minimap"></div>
 		<form id="selection-form" onsubmit="sendBoxes()" method="post">
 			{% csrf_token %}
-			<input type="submit" value="Submit">
 		</form>
 		<button onclick="undoBox()">Delete Selected Box</button>
 		<button onclick="clearBoxes()">Clear Boxes</button>
+		</br>
+		<button onclick="sendBoxes()">Submit</button>
+		<p id="sending">Sending information...</p>
+		<p id="warning">Some boxes were not sent correctly</p>
 	</div>
 	<div id="bigMap">
 		<div id="map"></div>

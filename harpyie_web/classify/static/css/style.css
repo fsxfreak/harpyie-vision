@@ -61,6 +61,16 @@ input[type="number"] {
 	height:100%;
 }
 
+#warning {
+	margin: 10px;
+	color:#a00
+}
+
+#sending {
+	margin: 10px;
+	color:#aa0
+}
+
 .ctl {
 	padding: 2px 10px 2px 10px;
 	background: white;

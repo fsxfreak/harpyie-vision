@@ -71,9 +71,6 @@ title.addTo(map);
 // Add base layers
 L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
-// Fit to overlay bounds (SW and NE points with (lat, lon))
-map.fitBounds([[16.5290315275, -88.6792335342], [16.5637965344, -88.7126917161]]);
-
 // The boxes that are drawn to show what is currently being selected
 var box;
 var minibox = L.rectangle([[0,0],[0,0]], {fill: false, color: SELECTED_BOX_COLOR});
@@ -351,23 +348,52 @@ function clearBoxes() {
 	removeMiniBox();
 }
 
+var pending = 0;
+var failed = false;
 // Send boxes in a window
 function sendBoxes() {
-	for (var i = boxes.length-1; i >= 0; i--) {
-		var select = boxes[i];
-		var data = $('#selection-form').serializeArray();
-		data.push({name:"lat1", value:select.getBounds().getNorth()});
-		data.push({name:"lng1", value:select.getBounds().getEast()});
-		data.push({name:"lat2", value:select.getBounds().getSouth()});
-		data.push({name:"lng2", value:select.getBounds().getWest()});
-		$.post("/tag/spawn", data, function() {
-			select.remove();
-			boxes.splice(i, 1);
-			work = true;
-		});
+	if (pending == 0) {
+		failed = false;
+		$("#sending").show();
+		$("#warning").hide();
+		for (var i = boxes.length-1; i >= 0; i--) {
+			pending++;
+			var select = boxes[i];
+			var data = [
+				{name:"lat1", value:select.getBounds().getNorth()},
+				{name:"lng1", value:select.getBounds().getEast()},
+				{name:"lat2", value:select.getBounds().getSouth()},
+				{name:"lng2", value:select.getBounds().getWest()}
+			];
+			data = data.concat($('#selection-form').serializeArray());
+			$.post("/tag/spawn", data, function() {
+				var index = boxes.indexOf(select);
+				if (index > -1) {
+					boxes.splice(index, 1);
+				}
+				select.remove();
+			})
+			.fail(function() {
+				$("#warning").show();
+				failed = true;
+			})
+			.always(function() {
+				pending--;
+				updateMap();
+			});
+		}
 	}
-	$.getJSON("tiles/retrieve", function(response) {
-		map.fitBounds([[response.lat1, response.lat1], [response.lat1, response.lat1]])});
-	return true;
-
 }
+function updateMap() {
+	if (pending == 0) {
+		$("#sending").hide();
+		if (!failed) {
+			$.getJSON("tiles/retrieve", function(response) {
+				map.fitBounds([[response.lat1, response.lat1], [response.lat1, response.lat1]])});
+		}
+	}
+}
+
+updateMap();
+$("#warning").hide();
+$("#sending").hide();
