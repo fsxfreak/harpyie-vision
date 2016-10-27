@@ -2,6 +2,19 @@
 {% load staticfiles %}
 {% block body_block %}
 <div class="container">
-here goes the leaflet stuff
+	<div id="sidebar">
+		<div id="minimap"></div>
+		<form id="selection-form" onsubmit="sendBoxes()" method="post">
+			{% csrf_token %}
+			User ID:<br><input type="number" name="id"><br>
+			<input type="submit" value="Submit">
+		</form>
+		<button onclick="undoBox()">Delete Selected Box</button>
+		<button onclick="clearBoxes()">Clear Boxes</button>
+	</div>
+	<div id="bigMap">
+		<div id="map"></div>
+	</div>
 </div>
+<script src="{% static 'classify.js' %}"></script>
 {% endblock %}

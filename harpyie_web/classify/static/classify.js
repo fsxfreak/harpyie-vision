@@ -9,8 +9,8 @@ var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '
 var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: 13, maxZoom: 21});
 
 // Overlay layers (TMS)
-var lyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 0.9, attribution: "", minZoom: 13, maxZoom: 21});
-var mlyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 1, attribution: "", minZoom: 13, maxNativeZoom: 21, maxZoom: 25});
+var lyr = L.tileLayer('/static/imgs/{z}/{x}/{y}.png', {tms: true, opacity: 1, attribution: "", minZoom: 13, maxZoom: 21});
+var mlyr = L.tileLayer('/static/imgs/{z}/{x}/{y}.png', {tms: true, opacity: 1, attribution: "", minZoom: 13, maxNativeZoom: 21, maxZoom: 25});
 // Map config
 var map = L.map('map', {
 	center: [16.546414031, -88.6959626251],
@@ -271,7 +271,9 @@ function onMouseUp(e) {
 				break;
 			}
 		}
-		boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
+		if (boxes.length > 0) {
+			boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
+		}
 		box.remove();
 		clickStart = null;
 		box = null;
@@ -333,6 +335,7 @@ function undoBox() {
 			minibox.setBounds(boxes[boxes.length - 1].getBounds());
 			minimap.fitBounds(minibox.getBounds());
 			boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
+			updateHandles();
 		} else {
 			removeMiniBox();
 		}
@@ -346,4 +349,59 @@ function clearBoxes() {
 		boxes.pop();
 	}
 	removeMiniBox();
+}
+
+// Send boxes in a window
+function sendBoxes() {
+	for (var i = 0; i < boxes.length; i++) {
+		var select = boxes[i]
+		sendBox("/create_tag", {
+			lat1: select.getBounds().getNorth(),
+			lon1: select.getBounds().getEast(),
+			lat2: select.getBounds().getSouth(),
+			lon2: select.getBounds().getWest()});
+	}
+	return true;
+
+}
+
+// Send box info in invisible iframe so that window doesn't refresh
+function sendBox( url, params ){
+
+    params = params || {};
+
+    // function to remove the iframe
+    var removeIframe = function( iframe ){
+        iframe.parentElement.removeChild(iframe);
+    };
+
+    var iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+
+    iframe.onload = function(){
+        var iframeDoc = this.contentWindow.document;
+
+        var form = iframeDoc.createElement('form');
+        form.method = "post";
+        form.action = url;
+        iframeDoc.body.appendChild(form);
+		form.appendChild(document.getElementsByName("csrfmiddlewaretoken")[0].cloneNode(true));
+        // pass the parameters
+        for( var name in params ){
+            var input = iframeDoc.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = params[name];
+            form.appendChild(input);
+        }
+		form.appendChild(document.getElementsByName("id")[0].cloneNode(true));
+
+        form.submit();
+        // remove the iframe
+        setTimeout( function(){ 
+            removeIframe(iframe);
+        }, 500);
+    };
+
+    document.body.appendChild(iframe);
 }
