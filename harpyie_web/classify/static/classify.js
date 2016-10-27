@@ -353,15 +353,21 @@ function clearBoxes() {
 
 // Send boxes in a window
 function sendBoxes() {
-	for (var i = 0; i < boxes.length; i++) {
-		var select = boxes[i]
-		var data = $('#selection-form').serializeArray()
+	for (var i = boxes.length-1; i >= 0; i--) {
+		var select = boxes[i];
+		var data = $('#selection-form').serializeArray();
 		data.push({name:"lat1", value:select.getBounds().getNorth()});
 		data.push({name:"lng1", value:select.getBounds().getEast()});
 		data.push({name:"lat2", value:select.getBounds().getSouth()});
 		data.push({name:"lng2", value:select.getBounds().getWest()});
-		$.post("/create_tag", data);
+		$.post("/tag/spawn", data, function() {
+			select.remove();
+			boxes.splice(i, 1);
+			work = true;
+		});
 	}
+	$.getJSON("tiles/retrieve", function(response) {
+		map.fitBounds([[response.lat1, response.lat1], [response.lat1, response.lat1]])});
 	return true;
 
 }
