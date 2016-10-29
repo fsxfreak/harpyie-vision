@@ -24,6 +24,7 @@ def tiles_retrieve(request):
   tile = ImageConfig.objects.get(url='temp').tile_set.all()[random_index]
   print(tile)
   user_data.tile = tile
+  user_data.save()
   print(user_data.tile)
 
   # choose by user
