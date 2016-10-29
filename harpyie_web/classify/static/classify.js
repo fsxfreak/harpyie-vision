@@ -71,9 +71,6 @@ title.addTo(map);
 // Add base layers
 L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
-// Fit to overlay bounds (SW and NE points with (lat, lon))
-map.fitBounds([[16.5290315275, -88.6792335342], [16.5637965344, -88.7126917161]]);
-
 // The boxes that are drawn to show what is currently being selected
 var box;
 var minibox = L.rectangle([[0,0],[0,0]], {fill: false, color: SELECTED_BOX_COLOR});
@@ -351,57 +348,50 @@ function clearBoxes() {
 	removeMiniBox();
 }
 
+var pending = 0;
+var failed = false;
 // Send boxes in a window
 function sendBoxes() {
-	for (var i = 0; i < boxes.length; i++) {
-		var select = boxes[i]
-		sendBox("/create_tag", {
-			lat1: select.getBounds().getNorth(),
-			lon1: select.getBounds().getEast(),
-			lat2: select.getBounds().getSouth(),
-			lon2: select.getBounds().getWest()});
+	if (pending == 0) {
+		failed = false;
+		$("#sending").show();
+		$("#warning").hide();
+		for (var i = boxes.length-1; i >= 0; i--) {
+			pending++;
+			var select = boxes[i];
+			var data = [
+				{name:"lat1", value:select.getBounds().getNorth()},
+				{name:"lon1", value:select.getBounds().getEast()},
+				{name:"lat2", value:select.getBounds().getSouth()},
+				{name:"lon2", value:select.getBounds().getWest()}
+			];
+			data = data.concat($('#selection-form').serializeArray());
+			console.log(select);
+			$.post("/tag/spawn/", data)
+			.fail(function() {
+				$("#warning").show();
+				failed = true;
+			})
+			.always(function() {
+				pending--;
+				updateMap();
+			});
+		}
+		updateMap();
 	}
-	return true;
-
+}
+function updateMap() {
+	if (pending == 0) {
+		$("#sending").hide();
+		if (!failed) {
+			$.getJSON("tiles/retrieve/", function(response) {
+				map.fitBounds([[response.lat1, response.lon1], [response.lat2, response.lon2]]);
+				clearBoxes();
+			});
+		}
+	}
 }
 
-// Send box info in invisible iframe so that window doesn't refresh
-function sendBox( url, params ){
-
-    params = params || {};
-
-    // function to remove the iframe
-    var removeIframe = function( iframe ){
-        iframe.parentElement.removeChild(iframe);
-    };
-
-    var iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-
-    iframe.onload = function(){
-        var iframeDoc = this.contentWindow.document;
-
-        var form = iframeDoc.createElement('form');
-        form.method = "post";
-        form.action = url;
-        iframeDoc.body.appendChild(form);
-		form.appendChild(document.getElementsByName("csrfmiddlewaretoken")[0].cloneNode(true));
-        // pass the parameters
-        for( var name in params ){
-            var input = iframeDoc.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = params[name];
-            form.appendChild(input);
-        }
-		form.appendChild(document.getElementsByName("id")[0].cloneNode(true));
-
-        form.submit();
-        // remove the iframe
-        setTimeout( function(){ 
-            removeIframe(iframe);
-        }, 500);
-    };
-
-    document.body.appendChild(iframe);
-}
+updateMap();
+$("#warning").hide();
+$("#sending").hide();

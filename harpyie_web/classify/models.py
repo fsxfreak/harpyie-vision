@@ -9,6 +9,15 @@ from django.utils import timezone
 import uuid
 from uuid import UUID
 
+class ImageConfig(models.Model):
+  # If an image is local, top level of url should be from 'static/'
+  url = models.CharField(blank=False, max_length=255, unique=True)
+
+  # ImageConfig.tile_set.all() is all the tiles referencing this image
+
+  def __unicode__(self):
+    return 'TODO UNICODE IMAGECONFIG'
+
 class Tile(models.Model):
   # Tile.tag_set.all() is all the tags referencing this Tile
   lat1 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
@@ -16,7 +25,7 @@ class Tile(models.Model):
   lat2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
   lon2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
 
-  image_config = models.ForeignKey(ImageConfig, on_delete=models.SET_NULL)
+  image_config = models.ForeignKey(ImageConfig)
 
   def __unicode__(self):
     return 'TODO UNICODE TILE'
@@ -25,6 +34,8 @@ class Tile(models.Model):
 # additional classify-specific data
 class UserData(models.Model):
     user = models.OneToOneField(User)
+    # The tile that this user is currently viewing
+    tile = models.ForeignKey(Tile, on_delete=models.PROTECT, blank=True, null=True)
 
     # UserData.tag_set.all() is all the tags referencing this User
 
@@ -58,12 +69,3 @@ class Tag(models.Model):
 
   def __unicode__(self):
     return 'TODO UNICODE TAG'
-
-class ImageConfig(models.Model):
-  # If an image is local, top level of url should be from 'static/'
-  url = models.CharField(blank=False, max_length=255, unique=True)
-
-  # ImageConfig.tile_set.all() is all the tiles referencing this image
-
-  def __unicode__(self):
-    return 'TODO UNICODE IMAGECONFIG'

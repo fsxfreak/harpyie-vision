@@ -10,3 +10,6 @@ def get_extents(y1, x1, y2, x2):
     return False
 
   return True, lat1, lon1, lat2, lon2
+
+def in_bounds(x1, y1, tx1, ty1, tx2, ty2):
+  return (x1 <= max(tx1, tx2)) and (x1 >= min(tx1, tx2)) and (y1 <= max(ty1, ty2)) and (y1 >= min(tx1, tx2))
