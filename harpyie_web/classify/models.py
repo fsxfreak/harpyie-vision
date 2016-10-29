@@ -34,6 +34,8 @@ class Tile(models.Model):
 # additional classify-specific data
 class UserData(models.Model):
     user = models.OneToOneField(User)
+    # The tile that this user is currently viewing
+    tile = models.ForeignKey(Tile, on_delete=models.PROTECT, blank=True, null=True)
 
     # UserData.tag_set.all() is all the tags referencing this User
 

@@ -361,18 +361,13 @@ function sendBoxes() {
 			var select = boxes[i];
 			var data = [
 				{name:"lat1", value:select.getBounds().getNorth()},
-				{name:"lng1", value:select.getBounds().getEast()},
+				{name:"lon1", value:select.getBounds().getEast()},
 				{name:"lat2", value:select.getBounds().getSouth()},
-				{name:"lng2", value:select.getBounds().getWest()}
+				{name:"lon2", value:select.getBounds().getWest()}
 			];
 			data = data.concat($('#selection-form').serializeArray());
-			$.post("/tag/spawn/", data, function() {
-				var index = boxes.indexOf(select);
-				if (index > -1) {
-					boxes.splice(index, 1);
-				}
-				select.remove();
-			})
+			console.log(select);
+			$.post("/tag/spawn/", data)
 			.fail(function() {
 				$("#warning").show();
 				failed = true;
@@ -382,6 +377,7 @@ function sendBoxes() {
 				updateMap();
 			});
 		}
+		updateMap();
 	}
 }
 function updateMap() {
@@ -389,7 +385,9 @@ function updateMap() {
 		$("#sending").hide();
 		if (!failed) {
 			$.getJSON("tiles/retrieve/", function(response) {
-				map.fitBounds([[response.lat1, response.lat1], [response.lat1, response.lat1]])});
+				map.fitBounds([[response.lat1, response.lon1], [response.lat2, response.lon2]]);
+				clearBoxes();
+			});
 		}
 	}
 }
