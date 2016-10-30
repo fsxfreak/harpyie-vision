@@ -25,6 +25,8 @@ class Tile(models.Model):
   lat2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
   lon2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
 
+
+  fill = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=11)
   image_config = models.ForeignKey(ImageConfig)
 
   def __unicode__(self):

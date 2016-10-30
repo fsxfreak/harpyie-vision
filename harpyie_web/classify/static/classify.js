@@ -82,6 +82,8 @@ var click;
 // An array of all areas selected so far
 var boxes = [];
 
+var imgUrl;
+
 // The small squares on the corners of the minibox to resize it
 var handleIcon = L.divIcon({iconSize: [10, 10], className: 'handle-icon'});
 var neHandle = L.marker([0, 0], {draggable: true, icon: handleIcon});
@@ -386,6 +388,9 @@ function updateMap() {
 		if (!failed) {
 			$.getJSON("tiles/retrieve/", function(response) {
 				map.fitBounds([[response.lat1, response.lon1], [response.lat2, response.lon2]]);
+				lyr.setUrl('/static/imgs/' + imgUrl + '/{z}/{x}/{y}.png');
+				mlyr.setUrl('/static/imgs/' + imgUrl + '/{z}/{x}/{y}.png');
+
 				clearBoxes();
 			});
 		}
