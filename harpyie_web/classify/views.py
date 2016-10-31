@@ -4,8 +4,9 @@ import math
 import random
 from PIL import Image
 import os
+from forms import UserForm
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 
 import globe_utils
 from utils import *
@@ -21,13 +22,43 @@ def tag(request):
 @login_required
 def tiles_retrieve(request):
   user_data = UserData.objects.get(user=request.user)
-  # TODO Make the random distribution change
+  # check if the user's previous tile is complete
+  complete = request.GET.get('complete', '')
+  if complete == 'yes':
+    # add current tile to list of completed tiles
+    user_data.tiles.add(user_data.tile)
+    # for every user that complete the tile, halve its weight
+    #NOTE Since individual weights are not kept track of (things just subtract from total weight),
+    #     if the user list is manually set, the weight values may break.
+    #     Additionally, this code assumes each Tile starts with weight 1
+    #     It might end up being not worth it to keep track of weights,
+    #     and just recalculating the total weights on each request may be easier/fast enough
+    #     I don't know much about databases so this might not be the best way
+    #TODO Make it so you can manually set user list/tile weight 
+    #     and make a function to update total weight values
+    user_data.tile.image_config.total_weight -= 1 / float(2**user_data.tile.viewed_users.count())
+    user_data.tile.image_config.save()
+    uiw = request.user.userimageweight_set.get(image=user_data.tile.image_config)
+    # since the weight of this tile should be 0 for this user, it should be reduced
+    # by twice as much as the other tiles
+    uiw.weight -= 2 / float(2**user_data.tile.viewed_users.count())
+    uiw.save()
+    # halve the tile's weight for each of the other users
+    for ud in UserData.objects.all():
+      if not ud in user_data.tile.viewed_users.all():
+        uiw = ud.user.userimageweight_set.get(image=user_data.tile.image_config)
+        uiw.weight -= 1 / float(2**user_data.tile.viewed_users.count())
+        uiw.save()
+
+
+  # TODO Use the weights above to change the odds of tiles being chosen
+  #      Currently, since weights are not used, tiles that should have 0
+  #      probability have a (low) chance of being chosen, which could result in
+  #      negative weights (which doesn't matter yet since weights aren't used
   random_index = random.randint(0, ImageConfig.objects.all()[0].tile_set.count() - 1)
   tile = ImageConfig.objects.all()[0].tile_set.all()[random_index]
-  print(tile)
   user_data.tile = tile
   user_data.save()
-  print(user_data.tile)
 
   # choose by user
   return JsonResponse({
@@ -50,16 +81,15 @@ def tag_spawn(request):
     if not success:
       return JsonResponse({ 'message' : 'failure' })
     user_data = UserData.objects.get(user=request.user)
-    print(user_data)
     if user_data.tile is not None:
-      print("theres data")
       fty1 = user_data.tile.lat1
       ftx1 = user_data.tile.lon1
       fty2 = user_data.tile.lat2
       ftx2 = user_data.tile.lon2
       works, tx1, tx2, ty1, ty2 = get_extents(ftx1, ftx2, fty1, fty2)
+      # sometimes the view is slightly bigger than the actual tile that is served,
+      # but this just cuts out selections that are not completely in the tile
       if in_bounds(lon1, lat1, tx1, ty1, tx2, ty2) and in_bounds(lon2, lon2, tx1, ty1, tx2, ty2):
-        print("in bounds")
         # TODO Do something to handle how tags can be part of multiple tiles
         tag = Tag.objects.create(lat1 = lat1, lon1 = lon1, lat2 = lat2, lon2 = lon2, tile = user_data.tile)
     return JsonResponse({ 'message' : 'success' })
@@ -102,14 +132,17 @@ def images_spawn(request):
     print ('lon_step: %f' % lon_step)
     print ('lat_step: %f' % lat_step)
     # TODO not hardcode image url
-    image_config = ImageConfig.objects.get_or_create(url=request.POST.get('img_name', ''))
+    image_config = ImageConfig.objects.get_or_create(url=request.POST.get('img_name', ''), total_weight=0)
 
     print(os.listdir('classify/static/imgs/'))
     if image_config[1]:
       img = 0
       alpha = 0
       tile_pos = (-1, -1)
+      total = 0
 
+      # get the lowest resolution image of the map so that it can be used to
+      # calculate how empty tiles are
       min_zoom = int(sorted(os.listdir('classify/static/imgs/'))[0])
       for x in xrange(0, int(math.ceil(meters_x_step / STEP_SIZE_METERS))):
         print ('row %i of %i' % (x, int(math.ceil(meters_x_step / STEP_SIZE_METERS))))
@@ -140,15 +173,41 @@ def images_spawn(request):
               # so you have to subtract the y coordinate from 1 less than the image size
               if alpha[(px % image_size) + image_size * ((image_size-1) - (py % image_size))] == 0:
                   empty = True
-              fill += alpha[(px % image_size) + image_size * ((image_size-1) - (py % image_size))]          # create a tile that has twice the size of the step size so that
-          # there is significant overlap
-          image_config[0].tile_set.create(lat1 = left,
-                                          lon1 = top,
-                                          lat2 = right,
-                                          lon2 = bottom,
-                                          fill = fill / float(area*255))
+              fill += alpha[(px % image_size) + image_size * ((image_size-1) - (py % image_size))]
+          # only add a tile if it is at least 80% full
+          if fill / float(area*255) > 0.8:
+            # create a tile that has twice the size of the step size so that
+            # there is significant overlap
+            image_config[0].tile_set.create(lat1 = left,
+                                            lon1 = top,
+                                            lat2 = right,
+                                            lon2 = bottom,
+                                            fill = fill / float(area*255))
+            total += 1
+      image_config[0].total_weight = total
+      image_config[0].save()
+      for user in User.objects.all():
+        user.userimageweight_set.create(image = image_config[0],
+                                       weight = total)
 
     return success
   else:
     return failure
 
+# A temporary user creation screen I found at
+# http://stackoverflow.com/questions/11287485/taking-user-input-to-create-users-in-django
+# TODO This should eventually be replaced or stylized
+#      I just copied this to quickly test having a bunch of users
+def adduser(request):
+    if request.method == "POST":
+        form = UserForm(request.POST)
+        if form.is_valid():
+            new_user = User.objects.create_user(**form.cleaned_data)
+            for img in ImageConfig.objects.all():
+                img.userimageweight_set.create(user = new_user,
+                                               weight = img.total_weight)
+            return HttpResponseRedirect('/')
+    else:
+        form = UserForm() 
+
+    return render(request, 'classify/adduser.html', {'form': form}) 

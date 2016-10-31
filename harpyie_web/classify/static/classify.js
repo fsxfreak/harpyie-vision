@@ -353,11 +353,16 @@ function clearBoxes() {
 var pending = 0;
 var failed = false;
 // Send boxes in a window
+// TODO Have some kind of warning when sendBoxes is called with no selections
+// 		in case someone accidentally pressed submit twice
 function sendBoxes() {
 	if (pending == 0) {
 		failed = false;
 		$("#sending").show();
 		$("#warning").hide();
+		if (boxes.length == 0) {
+			updateMap(false);
+		}
 		for (var i = boxes.length-1; i >= 0; i--) {
 			pending++;
 			var select = boxes[i];
@@ -376,17 +381,18 @@ function sendBoxes() {
 			})
 			.always(function() {
 				pending--;
-				updateMap();
+				updateMap(false);
 			});
 		}
-		updateMap();
 	}
 }
-function updateMap() {
+function updateMap(first) {
 	if (pending == 0) {
 		$("#sending").hide();
 		if (!failed) {
-			$.getJSON("tiles/retrieve/", function(response) {
+			data = first ? [] : [{name:"complete", value:"yes"}];
+			
+			$.getJSON("tiles/retrieve/", data, function(response) {
 				map.fitBounds([[response.lat1, response.lon1], [response.lat2, response.lon2]]);
 				lyr.setUrl('/static/imgs/{z}/{x}/{y}.png');
 				mlyr.setUrl('/static/imgs/{z}/{x}/{y}.png');
@@ -397,6 +403,6 @@ function updateMap() {
 	}
 }
 
-updateMap();
+updateMap(true);
 $("#warning").hide();
 $("#sending").hide();

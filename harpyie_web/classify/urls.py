@@ -10,6 +10,8 @@ urlpatterns = [
   url(r'^accounts/login/$', auth.views.login,
       { 'template_name' : 'classify/login.html'}, name='login'),
 
+  url(r'^accounts/create/$', views.adduser, name='create'),
+
   url(r'^accounts/logout/$', auth.views.logout,
       { 'next_page': '/accounts/login' }, name='logout'),
 

@@ -5,6 +5,7 @@
 {% if form.errors %}
 <p>Your username and password didn't match. Please try again.</p>
 {% endif %}
+<a href="{% url 'create' %}">create user</a>
 
 <form method="post" action="{% url 'login' %}">
   {% csrf_token %}
@@ -22,4 +23,5 @@
   <input type="submit" value="login" />
   <input type="hidden" name="next" value="{% url 'tag' %}" />
 </form>
+<form method="post" action="{% url 'login' %}">
 {% endblock %}
