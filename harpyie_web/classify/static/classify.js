@@ -388,8 +388,8 @@ function updateMap() {
 		if (!failed) {
 			$.getJSON("tiles/retrieve/", function(response) {
 				map.fitBounds([[response.lat1, response.lon1], [response.lat2, response.lon2]]);
-				lyr.setUrl('/static/imgs/' + imgUrl + '/{z}/{x}/{y}.png');
-				mlyr.setUrl('/static/imgs/' + imgUrl + '/{z}/{x}/{y}.png');
+				lyr.setUrl('/static/imgs/{z}/{x}/{y}.png');
+				mlyr.setUrl('/static/imgs/{z}/{x}/{y}.png');
 
 				clearBoxes();
 			});

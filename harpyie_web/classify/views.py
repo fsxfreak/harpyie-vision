@@ -22,8 +22,8 @@ def tag(request):
 def tiles_retrieve(request):
   user_data = UserData.objects.get(user=request.user)
   # TODO Make the random distribution change
-  random_index = random.randint(0, ImageConfig.objects.get(url='temp').tile_set.count() - 1)
-  tile = ImageConfig.objects.get(url='temp').tile_set.all()[random_index]
+  random_index = random.randint(0, ImageConfig.objects.all()[0].tile_set.count() - 1)
+  tile = ImageConfig.objects.all()[0].tile_set.all()[random_index]
   print(tile)
   user_data.tile = tile
   user_data.save()
@@ -104,17 +104,43 @@ def images_spawn(request):
     # TODO not hardcode image url
     image_config = ImageConfig.objects.get_or_create(url=request.POST.get('img_name', ''))
 
-    # if image_config[1] and os.path.isdir('classify/static/imgs/' + image_config.url):
-      # min_zoom = sorted(os.listdir('classify/static/imgs/' + image_config.url))[0]
     print(os.listdir('classify/static/imgs/'))
     if image_config[1]:
+      img = 0
+      alpha = 0
+      tile_pos = (-1, -1)
+
       min_zoom = int(sorted(os.listdir('classify/static/imgs/'))[0])
       for x in xrange(0, int(math.ceil(meters_x_step / STEP_SIZE_METERS))):
         print ('row %i of %i' % (x, int(math.ceil(meters_x_step / STEP_SIZE_METERS))))
         for y in xrange(0, int(math.ceil(meters_y_step / STEP_SIZE_METERS))):
+          left = min(lat1, lat2) + y * lat_step
+          top = min(lon1, lon2) + x * lon_step
+          right = min(lat1, lat2) + (y + 2) * lat_step
+          bottom = min(lon1, lon2) + (x + 2) * lon_step
+          px1, py1 = globe.MetersToPixels(*(globe.LatLonToMeters(left, top)+(min_zoom,)))
+          px2, py2 = globe.MetersToPixels(*(globe.LatLonToMeters(right, bottom)+(min_zoom,)))
           area = (int(round(px2)) - int(round(px1))) * (int(round(py2)) - int(round(py1)))
           fill = 0;
-          # create a tile that has twice the size of the step size so that
+          image_size = 256
+          empty = False
+          # TODO Optimize this (do something like getting the total of each quarter
+          #      of a tile, then sum the right ones up & either preload all images or
+          #      move through the map in a way that reloads images less)
+          # Keeps track of what fraction of a tile has information
+          # can either use this to make less filled tiles less likely to be shown,
+          # or can just not include the tiles if they are too empty
+          for px in xrange(int(round(px1)), int(round(px2))):
+            for py in xrange(int(round(py1)), int(round(py2))):
+              if not globe.PixelsToTile(px, py) == tile_pos:
+                tile_pos = globe.PixelsToTile(px, py)
+                img = Image.open('classify/static/imgs/%i/%i/%i.png' % (min_zoom, tile_pos[0], tile_pos[1]), 'r')
+                alpha = img.split()[-1].getdata()
+              # the tiles y value increases going up, but the pixel values in the images increase going down
+              # so you have to subtract the y coordinate from 1 less than the image size
+              if alpha[(px % image_size) + image_size * ((image_size-1) - (py % image_size))] == 0:
+                  empty = True
+              fill += alpha[(px % image_size) + image_size * ((image_size-1) - (py % image_size))]          # create a tile that has twice the size of the step size so that
           # there is significant overlap
           image_config[0].tile_set.create(lat1 = left,
                                           lon1 = top,
