@@ -16,7 +16,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
@@ -24,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['ngs.ucsd.edu']
 
 
 # Application definition
@@ -103,7 +102,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # allow extension of django.contrib.auth.models.User
 AUTH_PROFILE_MODULE = 'classify.UserData'
 
-LOGIN_URL = '/accounts/login/'
+LOGIN_URL = '/e4e/ml_training_map/harpyie_web/accounts/login/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
