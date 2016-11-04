@@ -1,6 +1,9 @@
-{% extends "classify/base.html" %}
 {% load staticfiles %}
 {% block body_block %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
 <div class="container">
 	<div id="sidebar">
 		<div id="minimap"></div>
@@ -13,6 +16,7 @@
 		<button onclick="sendBoxes()">Submit</button>
 		<p id="sending">Sending information...</p>
 		<p id="warning">Some boxes were not sent correctly</p>
+    <a id="logout" href="{% url 'logout' %}">logout</a>
 	</div>
 	<div id="bigMap">
 		<div id="map"></div>
