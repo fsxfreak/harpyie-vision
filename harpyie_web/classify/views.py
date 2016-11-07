@@ -1,17 +1,21 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.http import JsonResponse
+from django.http import HttpResponse
+
 import math
 import random
 from PIL import Image
 import os
 from forms import UserForm
 
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 
 import globe_utils
 from utils import *
 from models import *
 
+import csv
 import json
 
 # See classify/urls.py for why login_url is what it is
@@ -34,7 +38,7 @@ def tiles_retrieve(request):
     #     It might end up being not worth it to keep track of weights,
     #     and just recalculating the total weights on each request may be easier/fast enough
     #     I don't know much about databases so this might not be the best way
-    #TODO Make it so you can manually set user list/tile weight 
+    #TODO Make it so you can manually set user list/tile weight
     #     and make a function to update total weight values
     user_data.tile.image_config.total_weight -= 1 / float(2**user_data.tile.viewed_users.count())
     user_data.tile.image_config.save()
@@ -208,6 +212,19 @@ def adduser(request):
                                                weight = img.total_weight)
             return HttpResponseRedirect('/e4e/ml_training_map/harpyie_web/')
     else:
-        form = UserForm() 
+        form = UserForm()
 
-    return render(request, 'classify/adduser.html', {'form': form}) 
+    return render(request, 'classify/adduser.html', {'form': form})
+
+@login_required
+def tags_download(request):
+  response = HttpResponse(content_type='text/csv')
+  response['Content-Disposition'] = 'attachment; filename="tags.csv"'
+
+  writer = csv.writer(response)
+  writer.writerow(['lat1', 'lon1', 'lat2', 'lon2', 'user'])
+  tags = Tag.objects.all()
+  for tag in tags:
+    writer.writerow([tag,lat1, tag.lon1, tag.lat2, tag.lon2, tag.user.username])
+
+  return response

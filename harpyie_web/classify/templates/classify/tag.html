@@ -16,7 +16,8 @@
 		<button onclick="sendBoxes()">Submit</button>
 		<p id="sending">Sending information...</p>
 		<p id="warning">Some boxes were not sent correctly</p>
-    <a id="logout" href="{% url 'logout' %}">logout</a>
+    	<a id="logout" href="{% url 'logout' %}">logout</a>
+		<p><a href="{% url 'tags/download' %}">download tags</a></p>
 	</div>
 	<div id="bigMap">
 		<div id="map"></div>
