@@ -21,5 +21,8 @@ urlpatterns = [
 
   # GET/POST here to configure image extents for tagging
   url(r'^images/configure/$', views.images_configure, name='images/configure'),
-  url(r'^images/spawn/$', views.images_spawn, name='images/spawn')
+  url(r'^images/spawn/$', views.images_spawn, name='images/spawn'),
+
+  # GET here to download the csv
+  url(r'^tags/download/$', views.tags_download, name='tags/download'),
 ]

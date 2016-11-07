@@ -1,16 +1,18 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.http import JsonResponse
+from django.http import HttpResponse
+
 import math
 import random
 from PIL import Image
 import os
 
-from django.http import JsonResponse
-
 import globe_utils
 from utils import *
 from models import *
 
+import csv
 import json
 
 # See classify/urls.py for why login_url is what it is
@@ -152,3 +154,15 @@ def images_spawn(request):
   else:
     return failure
 
+@login_required
+def tags_download(request):
+  response = HttpResponse(content_type='text/csv')
+  response['Content-Disposition'] = 'attachment; filename="tags.csv"'
+
+  writer = csv.writer(response)
+  writer.writerow(['lat1', 'lon1', 'lat2', 'lon2', 'user'])
+  tags = Tag.objects.all()
+  for tag in tags:
+    writer.writerow([tag,lat1, tag.lon1, tag.lat2, tag.lon2, tag.user.username])
+
+  return response
