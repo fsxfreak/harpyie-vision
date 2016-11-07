@@ -225,6 +225,6 @@ def tags_download(request):
   writer.writerow(['lat1', 'lon1', 'lat2', 'lon2', 'user'])
   tags = Tag.objects.all()
   for tag in tags:
-    writer.writerow([tag,lat1, tag.lon1, tag.lat2, tag.lon2, tag.user.username])
+    writer.writerow([tag.lat1, tag.lon1, tag.lat2, tag.lon2, tag.user.user.username])
 
   return response
