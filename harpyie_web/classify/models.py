@@ -12,6 +12,7 @@ from uuid import UUID
 class ImageConfig(models.Model):
   # If an image is local, top level of url should be from 'static/'
   url = models.CharField(blank=False, max_length=255, unique=True)
+  total_weight = models.FloatField(blank=False,editable=False)
 
   # ImageConfig.tile_set.all() is all the tiles referencing this image
 
@@ -25,9 +26,16 @@ class Tile(models.Model):
   lat2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
   lon2 = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=14)
 
-
-  fill = models.DecimalField(blank=False, editable=False, decimal_places=10, max_digits=11)
+  fill = models.DecimalField(blank=False, editable=False, decimal_places=5, max_digits=6)
   image_config = models.ForeignKey(ImageConfig)
+
+  def __unicode__(self):
+    return 'TODO UNICODE TILE'
+
+class UserImageWeight(models.Model):
+  user = models.ForeignKey(User, blank=False, editable=False)
+  image = models.ForeignKey(ImageConfig, blank=False, editable=False)
+  weight = models.FloatField(blank=False, editable=False)
 
   def __unicode__(self):
     return 'TODO UNICODE TILE'
@@ -37,7 +45,8 @@ class Tile(models.Model):
 class UserData(models.Model):
     user = models.OneToOneField(User)
     # The tile that this user is currently viewing
-    tile = models.ForeignKey(Tile, on_delete=models.PROTECT, blank=True, null=True)
+    tile = models.ForeignKey(Tile, blank=True, null=True, on_delete=models.SET_NULL)
+    tiles = models.ManyToManyField(Tile, related_name='viewed_users')
 
     # UserData.tag_set.all() is all the tags referencing this User
 
