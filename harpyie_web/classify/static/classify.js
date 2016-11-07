@@ -138,6 +138,7 @@ function removeMiniBox() {
 	nwHandle.remove();
 	seHandle.remove();
 	swHandle.remove();
+  minimap.fitBounds([[0,0],[0,0]]);
 }
 function updateHandles() {
 	neHandle.setLatLng(minibox.getBounds().getNorthEast());
@@ -314,7 +315,9 @@ function onMouseMove(e) {
 			showHandles();
 			minimap.fitBounds(box.getBounds());
 		}
-	}
+	} else if (boxes.length == 0) {
+    minimap.setView(e.latlng, 21);
+  }
 }
 map.on('mousemove', onMouseMove);
 

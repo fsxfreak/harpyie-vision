@@ -91,7 +91,7 @@ def tag_spawn(request):
       # but this just cuts out selections that are not in the tile
       if in_bounds(lon1, lat1, tx1, ty1, tx2, ty2) or in_bounds(lon2, lat2, tx1, ty1, tx2, ty2) or in_bounds(lon1, lat2, tx1, ty1, tx2, ty2) or in_bounds(lon2, lat1, tx1, ty1, tx2, ty2):
         # TODO Do something to handle how tags can be part of multiple tiles
-        tag = Tag.objects.create(lat1 = lat1, lon1 = lon1, lat2 = lat2, lon2 = lon2, tile = user_data.tile)
+        tag = Tag.objects.create(lat1 = lat1, lon1 = lon1, lat2 = lat2, lon2 = lon2, tile = user_data.tile, user = user_data)
     return JsonResponse({ 'message' : 'success' })
   return JsonResponse({ 'message', 'failure' })
 
