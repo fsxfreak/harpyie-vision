@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.http import HttpResponse
@@ -7,7 +8,7 @@ import math
 import random
 from PIL import Image
 import os
-from forms import UserForm
+from forms import *
 
 from django.http import HttpResponseRedirect
 
@@ -18,6 +19,21 @@ from models import *
 import csv
 import json
 
+def loginuser(request):
+  form = LoginForm()
+  if request.method == 'POST':
+    form = LoginForm(request.POST)
+    if form.is_valid():
+      login(request, User.objects.get(username=form.cleaned_data['username']))
+      return HttpResponseRedirect('/e4e/ml_training_map/harpyie_web/')
+  variables = {
+      'form': form
+  }
+  return render(request, 'classify/login.html', variables)
+
+
+
+  
 # See classify/urls.py for why login_url is what it is
 @login_required
 def tag(request):
@@ -198,15 +214,11 @@ def images_spawn(request):
   else:
     return failure
 
-# A temporary user creation screen I found at
-# http://stackoverflow.com/questions/11287485/taking-user-input-to-create-users-in-django
-# TODO This should eventually be replaced or stylized
-#      I just copied this to quickly test having a bunch of users
 def adduser(request):
     if request.method == "POST":
         form = UserForm(request.POST)
         if form.is_valid():
-            new_user = User.objects.create_user(**form.cleaned_data)
+            new_user = User.objects.create_user(form.cleaned_data['username'])
             for img in ImageConfig.objects.all():
                 img.userimageweight_set.create(user = new_user,
                                                weight = img.total_weight)
@@ -225,6 +237,6 @@ def tags_download(request):
   writer.writerow(['lat1', 'lon1', 'lat2', 'lon2', 'user'])
   tags = Tag.objects.all()
   for tag in tags:
-    writer.writerow([tag,lat1, tag.lon1, tag.lat2, tag.lon2, tag.user.username])
+    writer.writerow([tag.lat1, tag.lon1, tag.lat2, tag.lon2, tag.user.user.username])
 
   return response

@@ -7,8 +7,7 @@ from . import views
 urlpatterns = [
   url(r'^$', views.tag, name='tag'),
 
-  url(r'^accounts/login/$', auth.views.login,
-      { 'template_name' : 'classify/login.html'}, name='login'),
+  url(r'^accounts/login/$', views.loginuser, name='login'),
 
   url(r'^accounts/create/$', views.adduser, name='create'),
 

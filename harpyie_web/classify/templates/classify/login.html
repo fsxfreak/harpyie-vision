@@ -3,7 +3,7 @@
 {% block body_block %}
 
 {% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
+<p>User does not exist.</p>
 {% endif %}
 <a href="{% url 'create' %}">create user</a>
 
@@ -13,10 +13,6 @@
     <tr>
       <td>{{ form.username.label_tag }}</td>
       <td>{{ form.username }}</td>
-    </tr>
-    <tr>
-      <td>{{ form.password.label_tag }}</td>
-      <td>{{ form.password }}</td>
     </tr>
   </table>
 
