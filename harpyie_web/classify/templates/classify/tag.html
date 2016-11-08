@@ -6,18 +6,21 @@
 <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
 <div class="container">
 	<div id="sidebar">
-		<div id="minimap"></div>
-		<form id="selection-form" onsubmit="sendBoxes()" method="post">
-			{% csrf_token %}
-		</form>
-		<button onclick="undoBox()">Delete Selected Box</button>
-		<button onclick="clearBoxes()">Clear Boxes</button>
-		</br>
-		<button onclick="sendBoxes()">Submit</button>
-		<p id="sending">Sending information...</p>
-		<p id="warning">Some boxes were not sent correctly</p>
-    	<a id="logout" href="{% url 'logout' %}">logout</a>
-		<p><a href="{% url 'tags/download' %}">download tags</a></p>
+    <div id="controlbox">
+      <div id="minimap"></div>
+      <form id="selection-form" onsubmit="sendBoxes()" method="post">
+        {% csrf_token %}
+      </form>
+      <button onclick="undoBox()">Delete Selected Box</button>
+      <button onclick="clearBoxes()">Clear Boxes</button>
+      <p id="message"> </p>
+      <button onclick="sendBoxes()">Submit</button>
+      <p>
+        <a id="logout" href="{% url 'logout' %}">logout</a>
+        <a href="{% url 'tags/download' %}">download tags</a>
+      </p>
+    </div>
+    <div id="boxlist"></div>
 	</div>
 	<div id="bigMap">
 		<div id="map"></div>

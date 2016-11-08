@@ -268,17 +268,7 @@ function onMouseUp(e) {
 			var cell = boxes[i];
 			// select box if it is clicked on
 			if (cell.getBounds().contains(e.latlng)){
-				if (boxes.length > 0) {
-					boxes[boxes.length - 1].setStyle({fill: true, color: OLD_BOX_COLOR});
-				}
-				// move the selected box to the end of the list so you can cycle through overlapping boxes
-				boxes.splice(i, 1);
-				boxes.push(cell);
-				cell.setStyle({fill: false, color: SELECTED_BOX_COLOR});
-				// update minimap for new selection
-				minibox.setBounds(cell.getBounds());
-				minimap.fitBounds(minibox.getBounds());
-				updateHandles();
+        selectBox(i);
 				break;
 			}
 		}
@@ -294,9 +284,26 @@ function onMouseUp(e) {
 	if (box != null) {
 		if (boxes.length > 0) {
 			boxes[boxes.length - 1].setStyle({fill: true, color: OLD_BOX_COLOR});
+      var button = document.getElementById(boxes[boxes.length-1]._leaflet_id);
+      button.style.backgroundColor = "#aaa";
 		}
 		clickStart = null;
 		boxes.push(box)
+    var list = document.getElementById("boxlist");
+    var button = document.createElement("button");
+    button.innerHTML = "<img id='boximg'></img>Palm Tree";
+    button.className = "boxlabel";
+    button.id = box._leaflet_id;
+    button.onclick = function() {
+      for (var i = 0; i < boxes.length; i++) {
+        var cell = boxes[i];
+        if (cell._leaflet_id == button.id) {
+          selectBox(i);
+          break;
+        }
+      }
+    };
+    list.appendChild(button);
 		box = null;
 	}
 	click = false;
@@ -343,11 +350,15 @@ map.on('mouseout', onMouseOut);
 function undoBox() {
 	if (boxes.length > 0) {
 		boxes[boxes.length - 1].remove();
+    var button = document.getElementById(boxes[boxes.length-1]._leaflet_id);
+    button.parentNode.removeChild(button);
 		boxes.pop();
 		if (boxes.length > 0) {
 			minibox.setBounds(boxes[boxes.length - 1].getBounds());
 			minimap.fitBounds(minibox.getBounds());
 			boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
+      var button = document.getElementById(boxes[boxes.length - 1]._leaflet_id);
+      button.style.backgroundColor = "#eee";
 			updateHandles();
 		} else {
 			removeMiniBox();
@@ -361,6 +372,7 @@ function clearBoxes() {
 		boxes[i].remove();
 		boxes.pop();
 	}
+  document.getElementById("boxlist").innerHTML = "";
 	removeMiniBox();
 }
 
@@ -372,8 +384,8 @@ var failed = false;
 function sendBoxes() {
 	if (pending == 0) {
 		failed = false;
-		$("#sending").show();
-		$("#warning").hide();
+    document.getElementById("message").innerHTML = "Sending Information...";
+    document.getElementById("message").style.color = "#aa0";
 		if (boxes.length == 0) {
 			updateMap(false);
 		}
@@ -390,7 +402,8 @@ function sendBoxes() {
 			console.log(select);
 			$.post("/e4e/ml_training_map/harpyie_web/tag/spawn/", data)
 			.fail(function() {
-				$("#warning").show();
+        document.getElementById("message").innerHTML = "Some information failed to send";
+        document.getElementById("message").style.color = "#a00";
 				failed = true;
 			})
 			.always(function() {
@@ -400,14 +413,34 @@ function sendBoxes() {
 		}
 	}
 }
+
+function selectBox(i) {
+  var cell = boxes[i];
+  if (boxes.length > 0) {
+    boxes[boxes.length - 1].setStyle({fill: true, color: OLD_BOX_COLOR});
+    var button = document.getElementById(boxes[boxes.length-1]._leaflet_id);
+    button.style.backgroundColor = "#aaa";
+  }
+  boxes.splice(i, 1);
+  boxes.push(cell);
+  var button = document.getElementById(cell._leaflet_id);
+  button.style.backgroundColor = "#eee";
+  cell.setStyle({fill: false, color: SELECTED_BOX_COLOR});
+  // update minimap for new selection
+  minibox.setBounds(cell.getBounds());
+  minimap.fitBounds(minibox.getBounds());
+  updateHandles();
+}
 function updateMap(first) {
 	if (pending == 0) {
-		$("#sending").hide();
 		if (!failed) {
 			data = first ? [] : [{name:"complete", value:"yes"}];
 			
 			$.getJSON("/e4e/ml_training_map/harpyie_web/tiles/retrieve/", data, function(response) {
 				mapBounds = [[response.lat1, response.lon1], [response.lat2, response.lon2]];
+        document.getElementById("message").innerHTML = "You've labeled " + response.tags + " tag" + (response.tags == 1 ? "" : "s") + " from " + response.tiles + " tile" + (response.tiles == 1 ? "" : "s");
+        document.getElementById("message").style.color = "#0a0";
+        $("#update").show();
         updateBounds();
 				lyr.setUrl('/static/imgs/{z}/{x}/{y}.png');
 				mlyr.setUrl('/static/imgs/{z}/{x}/{y}.png');
@@ -419,5 +452,3 @@ function updateMap(first) {
 }
 
 updateMap(true);
-$("#warning").hide();
-$("#sending").hide();

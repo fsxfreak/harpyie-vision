@@ -86,6 +86,8 @@ def tiles_retrieve(request):
     , 'lon1' : tile.lon1
     , 'lat2' : tile.lat2
     , 'lon2' : tile.lon2
+    , 'tiles' : user_data.tiles.count()
+    , 'tags' : user_data.tag_set.count()
     , 'img_name' : tile.image_config.url
     })
 
