@@ -25,7 +25,7 @@ def loginuser(request):
     form = LoginForm(request.POST)
     if form.is_valid():
       login(request, User.objects.get(username=form.cleaned_data['username']))
-      return HttpResponseRedirect('/e4e/ml_training_map/harpyie_web/')
+      return HttpResponseRedirect('/e4e/ml_training_map/harpy_web/')
   variables = {
       'form': form
   }
@@ -224,7 +224,7 @@ def adduser(request):
             for img in ImageConfig.objects.all():
                 img.userimageweight_set.create(user = new_user,
                                                weight = img.total_weight)
-            return HttpResponseRedirect('/e4e/ml_training_map/harpyie_web/')
+            return HttpResponseRedirect('/e4e/ml_training_map/harpy_web/')
     else:
         form = UserForm()
 

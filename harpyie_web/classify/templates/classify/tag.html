@@ -1,5 +1,6 @@
 {% load staticfiles %}
 {% block body_block %}
+<title>harpy-classify</title>
 <link rel="stylesheet" href="{% static 'css/style.css' %}">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -20,7 +21,7 @@
         <a href="{% url 'tags/download' %}">download tags</a>
       </p>
     </div>
-    <div id="boxlist"></div>
+    <ul id="boxlist"></ul>
 	</div>
 	<div id="bigMap">
 		<div id="map"></div>

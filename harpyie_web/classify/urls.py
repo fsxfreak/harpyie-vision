@@ -12,7 +12,7 @@ urlpatterns = [
   url(r'^accounts/create/$', views.adduser, name='create'),
 
   url(r'^accounts/logout/$', auth.views.logout,
-      { 'next_page': '/e4e/ml_training_map/harpyie_web/accounts/login' }, name='logout'),
+      { 'next_page': '/e4e/ml_training_map/harpy_web/accounts/login' }, name='logout'),
 
   # GET here to retrieve extents for an individual tile
   url(r'^tiles/retrieve/$', views.tiles_retrieve, name='tiles/retrieve'),

@@ -1,4 +1,5 @@
 const MAX_CLICK_MOVE = 5;
+const THUMBNAIL_SIZE = 84;
 const SELECTED_BOX_COLOR = '#FF00FF';
 const OLD_BOX_COLOR = '#8B008B';
 const DISABLE_COLOR = '#000000';
@@ -95,13 +96,23 @@ map.on('contextmenu', function(e) {});
 
 var mapBounds = [[0, 0], [0, 0]];
 
+// Since leaflet shows a larger view than required,
+// darken areas outside of current tile
+// Selections in those areas aren't going to be kept anyway
 var topBound = L.rectangle([[0,0],[0,0]], {clickable: false, stroke: false, fillOpacity:0.5, color: DISABLE_COLOR}).addTo(map);
 var rightBound = L.rectangle([[0,0],[0,0]], {clickable: false, stroke: false, fillOpacity:0.5, color: DISABLE_COLOR}).addTo(map);
 var leftBound = L.rectangle([[0,0],[0,0]], {clickable: false, stroke: false, fillOpacity:0.5, color: DISABLE_COLOR}).addTo(map);
 var bottomBound = L.rectangle([[0,0],[0,0]], {clickable: false, stroke: false, fillOpacity:0.5, color: DISABLE_COLOR}).addTo(map);
 
+// keep track of if any region is selected
+selected = false;
+
+// keep the bounds the same when the region is resized
+// this method is also used to update when a new tile is retrieved
 function updateBounds() {
   map.fitBounds(mapBounds);
+
+  // update dark border area
   topBound.setBounds([[90, -180], [Math.max(mapBounds[0][0], mapBounds[1][0]), 180]]);
   rightBound.setBounds([[Math.min(mapBounds[0][0], mapBounds[1][0]), Math.max(mapBounds[0][1], mapBounds[1][1])],
                        [Math.max(mapBounds[0][0], mapBounds[1][0]), 180]]);
@@ -111,6 +122,7 @@ function updateBounds() {
 }
 map.on('resize', updateBounds);
 
+// control visibility of handles that let you resize the minibox
 function showHandles() {
 	updateHandles();
 	neHandle.setOpacity(1);
@@ -124,6 +136,7 @@ function hideHandles() {
 	seHandle.setOpacity(0);
 	swHandle.setOpacity(0);
 }
+
 function addMiniBox(amap) {
 	minibox.addTo(amap);
 	neHandle.addTo(amap);
@@ -140,6 +153,8 @@ function removeMiniBox() {
 	swHandle.remove();
   minimap.fitBounds([[0,0],[0,0]]);
 }
+
+// update handle positions to keep them on the corners of the minibox
 function updateHandles() {
 	neHandle.setLatLng(minibox.getBounds().getNorthEast());
 	nwHandle.setLatLng(minibox.getBounds().getNorthWest());
@@ -228,7 +243,7 @@ function onMiniMove(e) {
 		var offLat = minimap.getBounds().getNorth() - miniStart.lat;
 		var offLng = minimap.getBounds().getEast() - miniStart.lng;
 		minibox.setBounds([[minibox.getBounds().getSouth() + offLat, minibox.getBounds().getWest() + offLng],[minibox.getBounds().getNorth() + offLat, minibox.getBounds().getEast() + offLng]]);
-		if (boxes.length > 0) {
+		if ((boxes.length > 0) && selected) {
 			// move the box on the normal map
 			boxes[boxes.length - 1].setBounds(minibox.getBounds());
 		}
@@ -254,9 +269,8 @@ function onMouseDown(e) {
 	clickStart = e;
 	box = L.rectangle(L.latLngBounds(e.latlng, e.latlng), {fill: false, color: SELECTED_BOX_COLOR}).addTo(map);
 	click = true;
-	if (boxes.length > 0) {
-		boxes[boxes.length - 1].setStyle({fill: true, color: OLD_BOX_COLOR});
-	}
+  deselectBox();
+  removeMiniBox();
 }
 map.on('mousedown', onMouseDown);
 
@@ -272,9 +286,6 @@ function onMouseUp(e) {
 				break;
 			}
 		}
-		if (boxes.length > 0) {
-			boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
-		}
 		box.remove();
 		clickStart = null;
 		box = null;
@@ -282,16 +293,13 @@ function onMouseUp(e) {
 
 	// add the new selection to the list of boxes if the mouse was dragged
 	if (box != null) {
-		if (boxes.length > 0) {
-			boxes[boxes.length - 1].setStyle({fill: true, color: OLD_BOX_COLOR});
-      var button = document.getElementById(boxes[boxes.length-1]._leaflet_id);
-      button.style.backgroundColor = "#aaa";
-		}
+    deselectBox();
+    selected = true;
 		clickStart = null;
 		boxes.push(box)
     var list = document.getElementById("boxlist");
-    var button = document.createElement("button");
-    button.innerHTML = "<img id='boximg'></img>Palm Tree";
+
+    var button = document.createElement("li");
     button.className = "boxlabel";
     button.id = box._leaflet_id;
     button.onclick = function() {
@@ -303,9 +311,15 @@ function onMouseUp(e) {
         }
       }
     };
+    var bounds = box.getBounds();
+    addThumbnail(button, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast(), 20);
     list.appendChild(button);
 		box = null;
 	}
+  if (!selected) {
+    minimap.setView(e.latlng, 21);
+  }
+
 	click = false;
 }
 map.on('mouseup', onMouseUp);
@@ -322,7 +336,7 @@ function onMouseMove(e) {
 			showHandles();
 			minimap.fitBounds(box.getBounds());
 		}
-	} else if (boxes.length == 0) {
+	} else if (!selected) {
     minimap.setView(e.latlng, 21);
   }
 }
@@ -334,13 +348,7 @@ function onMouseOut(e) {
 		box.remove();
 		clickStart = null;
 		box = null;
-		if (boxes.length > 0) {
-			minibox.setBounds(boxes[boxes.length - 1].getBounds());
-			minimap.fitBounds(minibox.getBounds());
-			boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
-		} else {
-			removeMiniBox();
-		}
+    removeMiniBox();
 	}
 	click = false;
 }
@@ -348,26 +356,19 @@ map.on('mouseout', onMouseOut);
 
 // Remove the box at the end of the list of boxes, which should be the selected box
 function undoBox() {
-	if (boxes.length > 0) {
+	if ((boxes.length > 0) && selected) {
+    deselectBox();
+    removeMiniBox();
 		boxes[boxes.length - 1].remove();
     var button = document.getElementById(boxes[boxes.length-1]._leaflet_id);
     button.parentNode.removeChild(button);
 		boxes.pop();
-		if (boxes.length > 0) {
-			minibox.setBounds(boxes[boxes.length - 1].getBounds());
-			minimap.fitBounds(minibox.getBounds());
-			boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
-      var button = document.getElementById(boxes[boxes.length - 1]._leaflet_id);
-      button.style.backgroundColor = "#eee";
-			updateHandles();
-		} else {
-			removeMiniBox();
-		}
 	}
 }
 
 // Remove all boxes
 function clearBoxes() {
+  deselectBox();
 	for (var i = boxes.length - 1; i >= 0; i--) {
 		boxes[i].remove();
 		boxes.pop();
@@ -380,7 +381,7 @@ var pending = 0;
 var failed = false;
 // Send boxes in a window
 // TODO Have some kind of warning when sendBoxes is called with no selections
-// 		in case someone accidentally pressed submit twice
+// 	 	in case someone accidentally pressed submit twice
 function sendBoxes() {
 	if (pending == 0) {
 		failed = false;
@@ -399,8 +400,7 @@ function sendBoxes() {
 				{name:"lon2", value:select.getBounds().getWest()}
 			];
 			data = data.concat($('#selection-form').serializeArray());
-			console.log(select);
-			$.post("/e4e/ml_training_map/harpyie_web/tag/spawn/", data)
+			$.post("/e4e/ml_training_map/harpy_web/tag/spawn/", data)
 			.fail(function() {
         document.getElementById("message").innerHTML = "Some information failed to send";
         document.getElementById("message").style.color = "#a00";
@@ -414,29 +414,104 @@ function sendBoxes() {
 	}
 }
 
-function selectBox(i) {
-  var cell = boxes[i];
+function deselectBox() {
   if (boxes.length > 0) {
     boxes[boxes.length - 1].setStyle({fill: true, color: OLD_BOX_COLOR});
     var button = document.getElementById(boxes[boxes.length-1]._leaflet_id);
-    button.style.backgroundColor = "#aaa";
+    button.style.backgroundColor = "#fff";
+    selected = false;
   }
+}
+function selectBox(i) {
+  var cell = boxes[i];
+  deselectBox();
+  removeMiniBox();
   boxes.splice(i, 1);
   boxes.push(cell);
+  // update thumbnail border
   var button = document.getElementById(cell._leaflet_id);
-  button.style.backgroundColor = "#eee";
+  button.style.backgroundColor = "#f0f";
   cell.setStyle({fill: false, color: SELECTED_BOX_COLOR});
+  if (boxes.length > 0) {
+    boxes[boxes.length - 1].setStyle({fill: false, color: SELECTED_BOX_COLOR});
+  }
   // update minimap for new selection
+  if (!selected) {
+    addMiniBox(minimap);
+  }
+  selected = true;
   minibox.setBounds(cell.getBounds());
   minimap.fitBounds(minibox.getBounds());
   updateHandles();
 }
+
+function pixelsToTile(px, py) {
+  var tx = Math.ceil(px / 256);
+  var ty = Math.ceil(py / 256);
+  return [tx, ty];
+}
+
+// adds at thumbnail to an element
+function addThumbnail(ele, la1, lo1, la2, lo2, zo) {
+  // get the bounds of the view in pixels
+  var topLeft = map.project([-Math.max(la1, la2), Math.min(lo1, lo2)], zo);
+  var bottomRight = map.project([-Math.min(la1, la2), Math.max(lo1, lo2)], zo);
+  // get which tile the pixels belong in 
+  var tlTile = pixelsToTile(topLeft.x, topLeft.y);
+  var brTile = pixelsToTile(bottomRight.x, bottomRight.y);
+  for (var i = tlTile[1]; i >= brTile[1]; i--) {
+    // get the top and bottom heights on the image tile that are part of the
+    // thumbnail
+    var south = 255 - (Math.max(bottomRight.y, 256 * (i - 1)) % 256);
+    var north = 255 - (Math.min(topLeft.y, (256 * i) - 1) % 256);
+    if (north < south) {
+      // create a row of tiled images for the thumbnail
+      var tr = document.createElement('div');
+      tr.style.width = "100%";
+      // set the height of the row
+      // this could have used the height of the element the thumbnail will be in
+      // instead of a constant, but it sometimes caused some problems with
+      // dynamically created elements
+      tr.style.height = ((south - north) * THUMBNAIL_SIZE / (topLeft.y - bottomRight.y)) + "px";
+      tr.style.whiteSpace = "nowrap";
+      for (var j = tlTile[0]; j <= brTile[0]; j++) {
+        // do the same process as above, but with the columns of images
+        var west = Math.max(topLeft.x, 256 * (j - 1)) % 256;
+        var east = Math.min(bottomRight.x, (256 * j) - 1) % 256;
+        if (west < east) {
+          var td = document.createElement('span');
+          td.style.height = "100%";
+          td.style.width = ((east - west) * THUMBNAIL_SIZE / (bottomRight.x - topLeft.x)) + "px";
+          td.style.overflow = "hidden";
+          td.style.display = "inline-block";
+          var img = document.createElement('img');
+          img.draggable = false;
+          img.src = "/static/imgs/" + zo + "/" + (j - 1) + "/" + (i-1) + ".png";
+
+          // scale and pan the image so that the correct part of it is in the span
+          img.style.height = 256 * THUMBNAIL_SIZE / (topLeft.y - bottomRight.y) + "px";
+          img.style.width = 256 * THUMBNAIL_SIZE / (bottomRight.x - topLeft.x) + "px";
+          img.style.margin = -(north * THUMBNAIL_SIZE / (topLeft.y - bottomRight.y)) + "px 0 0 " +
+                             -(west * THUMBNAIL_SIZE / (bottomRight.x - topLeft.x)) + "px";
+          td.appendChild(img);
+          tr.appendChild(td);
+        }
+
+      }
+      ele.appendChild(tr);
+    }
+  }
+}
+
 function updateMap(first) {
 	if (pending == 0) {
 		if (!failed) {
+      // tell the server if this is the first tile of the session or not so that
+      // it knows not tag the previous tile you viewed
 			data = first ? [] : [{name:"complete", value:"yes"}];
 			
-			$.getJSON("/e4e/ml_training_map/harpyie_web/tiles/retrieve/", data, function(response) {
+      // get a new tile to view
+			$.getJSON("/e4e/ml_training_map/harpy_web/tiles/retrieve/", data, function(response) {
 				mapBounds = [[response.lat1, response.lon1], [response.lat2, response.lon2]];
         document.getElementById("message").innerHTML = "You've labeled " + response.tags + " tag" + (response.tags == 1 ? "" : "s") + " from " + response.tiles + " tile" + (response.tiles == 1 ? "" : "s");
         document.getElementById("message").style.color = "#0a0";
