@@ -222,6 +222,9 @@ function onResizeUp(e) {
 		resizeAnchor = null;
 		resizeMove = null;
 		showHandles();
+    var bounds = boxes[boxes.length - 1].getBounds();
+    var button = document.getElementById(boxes[boxes.length-1]._leaflet_id);
+    addThumbnail(button, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast(), 20);
 	}
 }
 neHandle.on('dragend', onResizeUp);
@@ -258,6 +261,9 @@ function onMiniUp(e) {
 		miniStart = null;
 		if (boxes.length > 0) {
 			boxes[boxes.length - 1].setBounds(minibox.getBounds());
+      var bounds = boxes[boxes.length - 1].getBounds();
+      var button = document.getElementById(boxes[boxes.length-1]._leaflet_id);
+      addThumbnail(button, bounds.getNorth(), bounds.getWest(), bounds.getSouth(), bounds.getEast(), 20);
 			showHandles();
 		}
 	}
@@ -453,6 +459,9 @@ function pixelsToTile(px, py) {
 
 // adds at thumbnail to an element
 function addThumbnail(ele, la1, lo1, la2, lo2, zo) {
+  while (ele.firstChild) {
+    ele.removeChild(ele.firstChild);
+  }
   // get the bounds of the view in pixels
   var topLeft = map.project([-Math.max(la1, la2), Math.min(lo1, lo2)], zo);
   var bottomRight = map.project([-Math.min(la1, la2), Math.max(lo1, lo2)], zo);
