@@ -27,4 +27,6 @@ urlpatterns = [
 
   # GET here to download the csv
   url(r'^tags/download/$', views.tags_download, name='tags/download'),
+
+  url(r'^tiles/download/$', views.tiles_download, name='tiles/download'),
 ]

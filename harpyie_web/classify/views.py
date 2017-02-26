@@ -3,6 +3,8 @@ from django.contrib.auth import login
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.http import HttpResponse
+from django.db.models import Count
+from django.db.models import Min
 
 import math
 import random
@@ -75,8 +77,13 @@ def tiles_retrieve(request):
   #      Currently, since weights are not used, tiles that should have 0
   #      probability have a (low) chance of being chosen, which could result in
   #      negative weights (which doesn't matter yet since weights aren't used
-  random_index = random.randint(0, ImageConfig.objects.all()[0].tile_set.count() - 1)
-  tile = ImageConfig.objects.all()[0].tile_set.all()[random_index]
+  labeled_tiles = ImageConfig.objects.all()[0].tile_set.filter(use = True).exclude(viewed_users__in=[user_data]).annotate(num_users=Count('viewed_users'))
+  min_users = labeled_tiles.aggregate(Min('num_users'))['num_users__min']
+  valid_tiles = labeled_tiles.filter(num_users=min_users)
+  random_index = random.randint(0, valid_tiles.count())
+  tile = valid_tiles[random_index]
+  #random_index = random.randint(0, ImageConfig.objects.all()[0].tile_set.count() - 1)
+  #tile = ImageConfig.objects.all()[0].tile_set.all()[random_index]
   user_data.tile = tile
   user_data.save()
 
@@ -216,6 +223,13 @@ def images_spawn(request):
   else:
     return failure
 
+def setuse():
+    for tile in Tile.objects.all():
+        width = abs(tile.lat2 - tile.lat1)
+        height = abs(tile.lon2 - tile.lon1)
+        tile.use = (abs(tile.lat1) % width > width/2) and (abs(tile.lon1) % height > height/2)
+        tile.save()
+
 def adduser(request):
     if request.method == "POST":
         form = UserForm(request.POST)
@@ -236,9 +250,21 @@ def tags_download(request):
   response['Content-Disposition'] = 'attachment; filename="tags.csv"'
 
   writer = csv.writer(response)
-  writer.writerow(['lat1', 'lon1', 'lat2', 'lon2', 'user'])
+  writer.writerow(['lat1', 'lon1', 'lat2', 'lon2', 'user', 'timestamp', 'uuid'])
   tags = Tag.objects.all()
   for tag in tags:
-    writer.writerow([tag.lat1, tag.lon1, tag.lat2, tag.lon2, tag.user.user.username])
+    writer.writerow([tag.lat1, tag.lon2, tag.lat2, tag.lon1, tag.user.user.username, tag.created, tag.id])
 
+  return response
+
+@login_required
+def tiles_download(request):
+  response = HttpResponse(content_type='text/csv')
+  response['Content-Disposition'] = 'attachment; filename="tiles.csv"'
+  labeled_tiles = ImageConfig.objects.all()[0].tile_set.filter(use = True).annotate(num_users=Count('viewed_users'))
+  writer = csv.writer(response)
+  writer.writerow(['tileid','tilelat1','tilelon1','tilelat2','tilelon2','lat1', 'lon1', 'lat2', 'lon2', 'user', 'timestamp', 'uuid'])
+  for tile in labeled_tiles.filter(num_users__gt=0):
+    for tag in tile.tag_set.all():
+      writer.writerow([tile.id, tile.lat2, tile.lon1, tile.lat1, tile.lon2, tag.lat1, tag.lon2, tag.lat2, tag.lon1, tag.user.user.username, tag.created, tag.id])
   return response
